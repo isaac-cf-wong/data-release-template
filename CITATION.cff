@@ -1,0 +1,19 @@
+cff-version: 1.2.0
+title: 'Research Data Release Template'
+message:
+    'If you use this template or a repository created from it, please cite the
+    specific data release and its associated publication. Replace this file with
+    project-specific metadata before publishing.'
+type: dataset
+authors:
+    - given-names: Isaac C. F.
+      family-names: Wong
+      affiliation: KU Leuven
+      orcid: 'https://orcid.org/0000-0003-2166-0027'
+keywords:
+    - research data
+    - reproducibility
+    - data release
+    - scientific software
+license: BSD-3-Clause
+repository-code: 'https://github.com/isaac-cf-wong/data-release-template'
