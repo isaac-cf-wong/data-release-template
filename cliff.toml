@@ -15,6 +15,13 @@ render_always = true
 postprocessors = [
   { pattern = '<REPO>', replace = 'https://github.com/isaac-cf-wong/data-release-template' },
 ]
+footer = """
+---
+
+**Contributing**: We welcome contributions! Please see our [Contributing Guide](<REPO>/blob/main/CONTRIBUTING.md) for details.
+
+**Questions?** Open an issue on [GitHub](<REPO>/issues) or report a security concern privately through the repository's security policy.
+"""
 
 [git]
 conventional_commits = true
