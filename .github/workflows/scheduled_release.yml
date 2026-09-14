@@ -9,8 +9,38 @@ permissions:
     contents: write
 
 jobs:
-    release:
+    check_new_commits:
         if: vars.ENABLE_SCHEDULED_RELEASE == 'true'
+        runs-on: ubuntu-latest
+        outputs:
+            has-changes: ${{ steps.check_commits.outputs.has-changes }}
+        steps:
+            - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+              with:
+                  fetch-depth: 0
+            - name: Check for new commits
+              id: check_commits
+              uses: isaac-cf-wong/detect-git-changes-action@10d1e3ac7c5ee0997d7b370e9929cacac9c87013 # v0.0.19
+              with:
+                  use-latest-tag: true
+
+    ci:
+        needs: check_new_commits
+        if: needs.check_new_commits.outputs.has-changes == 'true'
+        uses: ./.github/workflows/ci.yml
+
+    codeql:
+        needs: check_new_commits
+        if: needs.check_new_commits.outputs.has-changes == 'true'
+        uses: ./.github/workflows/codeql.yml
+        permissions:
+            security-events: write
+            actions: read
+            contents: read
+
+    create_release:
+        needs: [check_new_commits, ci, codeql]
+        if: needs.check_new_commits.outputs.has-changes == 'true'
         runs-on: ubuntu-latest
         steps:
             - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
@@ -20,29 +50,38 @@ jobs:
               with:
                   python-version: '3.12'
                   enable-cache: true
-            - run: uv sync --group dev --upgrade
-            - run: uv run --no-sync pytest
-            - name: Check for changes since the latest release
-              id: changes
+            - name: Calculate next release version
+              id: version
               shell: bash
               run: |
                   set -euo pipefail
-                  latest=$(git describe --tags --abbrev=0 2>/dev/null || true)
-                  if [[ -n "$latest" ]]; then
-                    git diff --quiet "$latest" HEAD && echo "changed=false" >> "$GITHUB_OUTPUT" || echo "changed=true" >> "$GITHUB_OUTPUT"
-                  else
-                    echo "changed=true" >> "$GITHUB_OUTPUT"
-                  fi
-            - name: Build archive
-              if: steps.changes.outputs.changed == 'true'
+                  version=$(uvx --from git-cliff git-cliff --bumped-version --config cliff.toml)
+                  echo "version=${version#v}" >> "$GITHUB_OUTPUT"
+            - name: Build release archive
               run:
-                  uv run --no-sync python scripts/build_release_archive.py
-                  --output-dir dist --name "data-release-${GITHUB_SHA::7}"
-            - name: Publish GitHub release
-              if: steps.changes.outputs.changed == 'true'
-              env:
-                  GH_TOKEN: ${{ github.token }}
+                  uv run --no-project python scripts/build_release_archive.py
+                  --output-dir dist --name "data-release-${{
+                  steps.version.outputs.version }}"
+            - name: Create annotated tag
+              id: tag
+              shell: bash
               run: |
                   set -euo pipefail
-                  tag="v$(date -u +%Y.%m.%d).${GITHUB_RUN_NUMBER}"
-                  gh release create "$tag" dist/* --title "Data release $tag" --generate-notes
+                  tag="v${{ steps.version.outputs.version }}"
+                  git config user.name "github-actions[bot]"
+                  git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+                  git tag -a "$tag" -m "Data release $tag"
+                  git push origin "$tag"
+                  echo "tag=$tag" >> "$GITHUB_OUTPUT"
+            - name: Generate release notes
+              run:
+                  uvx --from git-cliff git-cliff --latest --config cliff.toml
+                  --output dist/RELEASE_NOTES.md
+            - name: Publish GitHub release
+              env:
+                  GH_TOKEN: ${{ github.token }}
+              run:
+                  gh release create "${{ steps.tag.outputs.tag }}"
+                  dist/data-release-*.zip dist/*.sha256 --title "Data release
+                  ${{ steps.tag.outputs.tag }}" --notes-file
+                  dist/RELEASE_NOTES.md
