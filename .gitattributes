@@ -1,0 +1,14 @@
+# Normalise text files to LF for predictable data processing in CI.
+* text=auto eol=lf
+
+# Data and archive formats are binary even when Git can sniff their contents.
+*.zip binary
+*.gz binary
+*.tar binary
+*.pdf binary
+*.png binary
+*.jpg binary
+*.jpeg binary
+
+# Generated files that should not pollute diffs unless explicitly requested.
+*.ipynb linguist-documentation

@@ -1,0 +1,97 @@
+[project]
+name = "data-release-template"
+version = "0.1.0"
+authors = [{ name = "Isaac C. F. Wong" }]
+description = "A GitHub template repository for releasing small research data and analysis scripts"
+readme = "README.md"
+requires-python = ">=3.12"
+license = "BSD-3-Clause"
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Intended Audience :: Science/Research",
+  "License :: OSI Approved :: BSD License",
+  "Programming Language :: Python :: 3 :: Only",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Programming Language :: Python :: 3.14",
+  "Topic :: Scientific/Engineering",
+]
+dependencies = []
+
+[dependency-groups]
+dev = [
+  "pre-commit>=4.3.0",
+  "pytest>=9.1.1",
+  "pytest-cov>=7.1.0",
+  "ruff>=0.16.7",
+]
+
+[tool.uv]
+# This repository publishes data and scripts, not an importable Python
+# distribution, so `uv sync` should only create the development environment.
+package = false
+
+[tool.coverage.run]
+branch = true
+
+[tool.coverage.report]
+fail_under = 0
+
+[tool.pytest.ini_options]
+addopts = "--cov-report xml:coverage.xml --cov scripts --cov-append -m 'not integration' --cov-report=term-missing"
+pythonpath = ["scripts"]
+testpaths = "tests"
+junit_family = "xunit2"
+markers = [
+  "integration: marks tests that touch external services or large data",
+  "slow: marks tests as slow",
+  "unit: fast offline tests",
+]
+
+[tool.ruff]
+line-length = 120 # Matches Black's default
+target-version = "py312" # Align with CI (3.12-3.14) and requires-python (>=3.12)
+lint.extend-select = [
+  "E",
+  "F",
+  "W",   # pycodestyle errors and warnings
+  "I",   # isort rules
+  "UP",  # pyupgrade rules
+  "C90", # McCabe complexity
+  "N",   # PEP8 naming
+  "B",   # Bugbear (opinionated checks)
+  "A",   # Flake8-builtins
+  "C4",  # Flake8-comprehensions
+  "PT",  # Flake8-pytest
+  "RUF", # Ruff-specific rules
+  "PL",  # Add pylint rules for fuller coverage
+  "SIM", # Similarities
+  "T10", # Debugger statements
+  "DOC", # Docstring
+  "D",   # Doc style
+  "S",   # Security
+]
+lint.ignore = [
+  "E501", # Line length (handled by formatter)
+  "C901", # Disable overly strict complexity checks (optional, adjust as needed)
+  "D203", # Incompatible with D211, which follows Google convention
+  "D213", # Incompatible with D212, which follows Google convention
+]
+fix = true # Enable autofix
+lint.unfixable = [] # List rules that should not be autofixed, if any
+
+[tool.ruff.format]
+quote-style = "double"       # Use double quotes for strings
+indent-style = "space"       # Use spaces for indentation
+docstring-code-format = true # Format code in docstrings
+
+[tool.ruff.lint.pydocstyle]
+convention = "google"
+
+[tool.ruff.lint.per-file-ignores]
+# Ignore specific rules in the tests directory
+"tests/*" = ["D", "S101", "ARG001", "PLC0415", "PLR2004"]
+# S101: allow assert statements
+# ARG001: allow unused function arguments (common in fixtures)
+# PLC0415: allow import statements not at the top level
+# PLR2004: allow magic values in the unit tests
