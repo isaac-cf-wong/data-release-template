@@ -1,5 +1,13 @@
 # Research Data Release Template
 
+[![CI](https://github.com/isaac-cf-wong/data-release-template/actions/workflows/ci.yml/badge.svg)](https://github.com/isaac-cf-wong/data-release-template/actions/workflows/ci.yml)
+[![CodeQL](https://github.com/isaac-cf-wong/data-release-template/actions/workflows/codeql.yml/badge.svg)](https://github.com/isaac-cf-wong/data-release-template/actions/workflows/codeql.yml)
+[![Scheduled Release](https://github.com/isaac-cf-wong/data-release-template/actions/workflows/scheduled_release.yml/badge.svg)](https://github.com/isaac-cf-wong/data-release-template/actions/workflows/scheduled_release.yml)
+[![pre-commit.ci status](https://results.pre-commit.ci/badge/github/isaac-cf-wong/data-release-template/main.svg)](https://results.pre-commit.ci/latest/github/isaac-cf-wong/data-release-template/main)
+[![License](https://img.shields.io/badge/License-BSD_3--Clause-blue.svg)](LICENSE)
+[![Python](https://img.shields.io/badge/Python-3.12%2B-blue.svg)](https://www.python.org/)
+[![SPEC 0 — Minimum Supported Dependencies](https://img.shields.io/badge/SPEC-0-green?labelColor=%23004811&color=%235CA038)](https://scientific-python.org/specs/spec-0000/)
+
 Template repository for publishing small research datasets and the scripts
 needed to reproduce the associated publication results.
 
