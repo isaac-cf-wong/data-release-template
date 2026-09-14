@@ -1,0 +1,43 @@
+# git-cliff configuration for versioned research data releases.
+
+[changelog]
+body = """
+{% if version %}## [{{ version | trim_start_matches(pat="v") }}] - {{ timestamp | date(format="%Y-%m-%d") }}{% else %}## [unreleased]{% endif %}
+
+{% for group, commits in commits | group_by(attribute="group") %}
+### {{ group | striptags | trim | upper_first }}
+{% for commit in commits %}- {% if commit.scope %}*({{ commit.scope }})* {% endif %}{{ commit.message | upper_first }} ([{{ commit.id | truncate(length=7, end="") }}](<REPO>/commit/{{ commit.id }}))
+{% endfor %}
+{% endfor %}
+"""
+trim = true
+render_always = true
+postprocessors = [
+  { pattern = '<REPO>', replace = 'https://github.com/isaac-cf-wong/data-release-template' },
+]
+footer = """
+---
+
+**Contributing**: We welcome contributions! Please see our [Contributing Guide](<REPO>/blob/main/CONTRIBUTING.md) for details.
+
+**Questions?** Open an issue on [GitHub](<REPO>/issues) or report a security concern privately through the repository's security policy.
+"""
+
+[git]
+conventional_commits = true
+filter_unconventional = false
+require_conventional = false
+commit_parsers = [
+  { message = "^Merge pull request", skip = true },
+  { message = "^feat", group = "🚀 Features" },
+  { message = "^fix", group = "🐛 Bug Fixes" },
+  { message = "^docs?", group = "📚 Documentation" },
+  { message = "^refactor", group = "🚜 Refactoring" },
+  { message = "^test", group = "🧪 Testing" },
+  { message = "^chore|^ci", group = "⚙️ Maintenance" },
+  { body = ".*security", group = "🛡️ Security" },
+  { message = ".*", group = "💼 Other" },
+]
+tag_pattern = "v[0-9].*"
+sort_commits = "newest"
+topo_order_commits = true

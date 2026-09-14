@@ -1,0 +1,49 @@
+name: Release
+
+on:
+    workflow_dispatch:
+        inputs:
+            tag_name:
+                description: Tag name for the release (for example, v1.2.3)
+                required: true
+                type: string
+    workflow_call:
+        inputs:
+            tag_name:
+                required: true
+                type: string
+
+permissions:
+    contents: write
+
+jobs:
+    release:
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+              with:
+                  fetch-depth: 0
+                  ref: ${{ inputs.tag_name || github.event.inputs.tag_name }}
+            - name: Generate release notes
+              uses: orhun/git-cliff-action@3d96a18cc4ec17e9dc69ddcc424ccafaf1f78ce2 # v4.9.0
+              with:
+                  config: cliff.toml
+                  args: --current --verbose
+              env:
+                  OUTPUT: RELEASE_NOTES.md
+            - uses: astral-sh/setup-uv@37802adc94f370d6bfd71619e3f0bf239e1f3b78 # v7
+              with:
+                  python-version: '3.12'
+            - name: Build archive
+              run:
+                  uv run --no-project python scripts/build_release_archive.py
+                  --output-dir dist --name "data-release-${{ inputs.tag_name ||
+                  github.event.inputs.tag_name }}"
+            - name: Publish release
+              env:
+                  GH_TOKEN: ${{ github.token }}
+              run:
+                  gh release create "${{ inputs.tag_name ||
+                  github.event.inputs.tag_name }}" dist/* --title "Data release
+                  ${{ inputs.tag_name || github.event.inputs.tag_name }}"
+                  --notes-file RELEASE_NOTES.md
