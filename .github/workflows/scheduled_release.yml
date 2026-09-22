@@ -55,7 +55,17 @@ jobs:
               shell: bash
               run: |
                   set -euo pipefail
-                  version=$(uvx --from git-cliff git-cliff --bumped-version --config cliff.toml)
+                  # git-cliff --bumped-version needs a previous tag to bump from;
+                  # on the very first release there is none, so default to v0.1.0.
+                  PREVIOUS_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "none")
+                  if [ "$PREVIOUS_TAG" = "none" ]; then
+                    version="v0.1.0"
+                    echo "First release — bumping to $version"
+                  else
+                    PROPOSED_TAG=$(uvx --from git-cliff git-cliff --bumped-version --config cliff.toml)
+                    version="$PROPOSED_TAG"
+                    echo "git-cliff proposed $version"
+                  fi
                   echo "version=${version#v}" >> "$GITHUB_OUTPUT"
             - name: Build release archive
               run:
